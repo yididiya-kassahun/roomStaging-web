@@ -1,9 +1,10 @@
 <template>
   <SideNav/>
+  <RouterView/>
 </template>
 
 <script>
-import SideNav from './components/Side-Nav.vue'
+import SideNav from './components/SideNav.vue'
 
 export default {
   name: 'App',
