@@ -8,7 +8,7 @@
       outline: 0.3px solid #5e5e5e;
     "
   >
-    <h3>home page</h3>
+    <h3>Floor plan to 3D Model Generator</h3>
     <v-container> </v-container>
   </v-card>
 </template>

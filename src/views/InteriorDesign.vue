@@ -10,13 +10,8 @@
   >
     <v-row style="padding: 10px">
       <v-col cols="8">
-        <v-card style="height: 500px">
-          <canvas
-            style="margin-left: 5%"
-            ref="canvas"
-            :width="900"
-            :height="500"
-          >
+        <v-card ref="myTargetCard" style="height: 500px">
+          <canvas style="margin-left: 5%; border: 1px solid #000" ref="canvas">
           </canvas>
         </v-card>
       </v-col>
@@ -30,7 +25,7 @@
                 class="form-container"
                 enctype="multipart/form-data"
               >
-                <h3>Upload room image</h3>
+                <h3>Upload Room Image</h3>
                 <!-- show-size -->
                 <v-file-input
                   show-size
@@ -39,7 +34,7 @@
                   v-model="imgData.img"
                   accept="image/*"
                 ></v-file-input>
-                <h3>Upload the mask</h3>
+                <h3>Enter your description</h3>
                 <!-- <v-file-input
                   show-size
                   label="File input"
@@ -51,19 +46,34 @@
                   clearable
                   clear-icon="mdi-close-circle"
                   label="Enter the prompt here"
+                  rows="8"
                   v-model="imgData.prompt"
                   style="width: 90%; margin-left: 40px"
                 ></v-textarea>
-                <v-btn
-                  color="white"
-                  style="background-color: #000"
-                  class="mt-4"
-                  prepend-icon="mdi-creation"
-                  block
-                  type="submit"
-                >
-                  Generate
-                </v-btn>
+                <v-row>
+                  <v-col cols="8">
+                    <v-btn
+                      color="white"
+                      style="background-color: #000"
+                      class="mt-4"
+                      prepend-icon="mdi-creation"
+                      block
+                      type="submit"
+                    >
+                      Generate
+                    </v-btn>
+                  </v-col>
+                  <v-col cols="4">
+                    <v-btn
+                      color="white"
+                      style="background-color: #000"
+                      class="mt-4"
+                      prepend-icon="mdi-download"
+                      block
+                    >
+                    </v-btn>
+                  </v-col>
+                </v-row>
               </v-form>
             </v-col>
           </v-row>
@@ -344,6 +354,9 @@ export default {
     };
   },
   mounted() {
+    const canvas = this.$refs.canvas;
+    canvas.width = 900;
+    canvas.height = 500;
     this.initCanvas();
   },
   methods: {
@@ -377,11 +390,23 @@ export default {
 
         reader.onload = (e) => {
           fabric.Image.fromURL(e.target.result, (img) => {
-            const imgScaled = img.scaleToWidth(this.canvas.width);
-            imgScaled.set({ left: 0, top: 0 });
+            const scale = Math.min(
+              this.canvas.width / img.width,
+              this.canvas.height / img.height
+            );
+            img.scale(scale).set({ left: 0, top: 0 });
+
+            // Set as background image
             this.canvas.setBackgroundImage(
-              imgScaled,
-              this.canvas.renderAll.bind(this.canvas)
+              img,
+              this.canvas.renderAll.bind(this.canvas),
+              {
+                // Options to set the background image
+                originX: "left",
+                originY: "top",
+                scaleX: scale,
+                scaleY: scale,
+              }
             );
           });
         };
@@ -393,10 +418,9 @@ export default {
     // converting base64 image to file
 
     convertBase64ToBlob(base64) {
-
       return new Promise((resolve) => {
-        const parts = base64.split(';base64,');
-        const imageType = parts[0].split(':')[1];
+        const parts = base64.split(";base64,");
+        const imageType = parts[0].split(":")[1];
         const decodedData = window.atob(parts[1]);
         const uInt8Array = new Uint8Array(decodedData.length);
 
@@ -407,34 +431,31 @@ export default {
         resolve(new Blob([uInt8Array], { type: imageType }));
       });
     },
-    
-     generateImg() {
 
+    generateImg() {
       const base64Img = this.canvas.toDataURL({
-          format: "png",
-          quality: 1,
-        });
+        format: "png",
+        quality: 1,
+      });
 
-      this.convertBase64ToBlob(base64Img).then(blob => {
+      this.convertBase64ToBlob(base64Img)
+        .then((blob) => {
+          //  console.log("========>"+blob);
 
-        console.log("========>"+blob);
-        
-      const formData = new FormData();
-      formData.append("img", this.imgData.img[0]);
-      formData.append("imgMask",blob,'imageMask.png');
-      formData.append("prompt", this.imgData.prompt);
+          const formData = new FormData();
+          formData.append("img", this.imgData.img[0]);
+          formData.append("imgMask", blob, "imageMask.png");
+          formData.append("prompt", this.imgData.prompt);
 
+          const config = { headers: { "Content-Type": "multipart/form-data" } };
 
-      const config = { headers: { "Content-Type": "multipart/form-data" } };
-
-       axios
-        .post("generate.image", formData, config)
-        .then((result) => {
-          console.log(result);
-          return this.$router.push("/design");
+          axios.post("generate.image", formData, config).then((result) => {
+            console.log(result);
+            return this.$router.push("/design");
+          });
         })
-      }).then(response => {
-          console.log('Image uploaded successfully', response);
+        .then((response) => {
+          console.log("Image uploaded successfully", response);
         })
         .catch((err) => {
           console.log(err.response.data);
