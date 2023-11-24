@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 
 import home from "../views/homePage.vue";
 import InteriorDesign from "../views/InteriorDesign.vue";
+import imgSlider from "../views/imgSlider.vue";
 
 const routes = [
   {
@@ -13,6 +14,11 @@ const routes = [
     path: "/design",
     name: "InteriorDesign",
     component: InteriorDesign,
+  },
+  {
+    path: "/img",
+    name: "imgSlider",
+    component: imgSlider,
   },
 ];
 

@@ -27,27 +27,45 @@
         <v-card style="height: 500px">
           <v-row>
             <v-col style="margin: 20px">
-              <h3>Upload room image</h3>
-              <v-file-input show-size label="File input"></v-file-input>
-              <h3>Upload the mask</h3>
-              <v-file-input show-size label="File input"></v-file-input>
-              <small>Enter the description of the desiring room</small>
-              <v-textarea
-                clearable
-                clear-icon="mdi-close-circle"
-                label="Enter the prompt here"
-                style="width: 90%; margin-left: 40px"
-              ></v-textarea>
-              <v-btn
-                color="white"
-                style="background-color: #000"
-                class="mt-4"
-                prepend-icon="mdi-creation"
-                block
-                @click="resetValidation"
+              <v-form
+                @submit.prevent="generateImg"
+                class="form-container"
+                enctype="multipart/form-data"
               >
-                Generate
-              </v-btn>
+                <h3>Upload room image</h3>
+                <!-- show-size -->
+                <v-file-input
+                  show-size
+                  label="File input"
+                  v-model="imgData.img"
+                  accept="image/*"
+                ></v-file-input>
+                <h3>Upload the mask</h3>
+                <v-file-input
+                  show-size
+                  label="File input"
+                  v-model="imgData.imgMask"
+                  accept="image/*"
+                ></v-file-input>
+                <small>Enter the description of the desiring room</small>
+                <v-textarea
+                  clearable
+                  clear-icon="mdi-close-circle"
+                  label="Enter the prompt here"
+                  v-model="imgData.prompt"
+                  style="width: 90%; margin-left: 40px"
+                ></v-textarea>
+                <v-btn
+                  color="white"
+                  style="background-color: #000"
+                  class="mt-4"
+                  prepend-icon="mdi-creation"
+                  block
+                  type="submit"
+                >
+                  Generate
+                </v-btn>
+              </v-form>
             </v-col>
           </v-row>
         </v-card>
@@ -60,20 +78,20 @@
           Add your budget limit and extra description of the furniture eg.
           Amazon, WayFair, IKEA
         </p>
-        <br>
+        <br />
         <v-form>
-                <v-text-field
-                  v-model="message"
-                  append-icon="mdi-send"
-                  variant="filled"
-                  clearable
-                  label="Add your budget"
-                  type="text"
-                  style="width: 400px;"
-                  @click:append-inner="toggleMarker"
-                  @click:append="sendMessage"
-                  @click:clear="clearMessage"
-                ></v-text-field>
+          <v-text-field
+            v-model="message"
+            append-icon="mdi-send"
+            variant="filled"
+            clearable
+            label="Add your budget"
+            type="text"
+            style="width: 400px"
+            @click:append-inner="toggleMarker"
+            @click:append="sendMessage"
+            @click:clear="clearMessage"
+          ></v-text-field>
         </v-form>
 
         <br />
@@ -293,6 +311,8 @@
 </template>
 
 <script>
+import axios from "axios";
+
 import item1 from "../assets/products/bed.webp";
 import item2 from "../assets/products/chair.avif";
 import item3 from "../assets/products/coffee-table.avif";
@@ -315,7 +335,39 @@ export default {
       item6: item6,
       item7: item7,
       item8: item8,
+      imgData: {
+        img: null,
+        imgMask: null,
+        prompt: "",
+      },
     };
+  },
+  methods: {
+    //  handleImageChange(event) {
+    //    this.imgData.img = event.target.files[0];
+    //    this.imgData.imgMask = event.target.files[1];
+    // },
+
+    async generateImg() {
+      const formData = new FormData();
+      formData.append("img", this.imgData.img[0]);
+      formData.append("imgMask", this.imgData.imgMask[0]);
+      formData.append("prompt", this.imgData.prompt);
+
+    //  console.log("======" + this.imgData);
+
+      const config = { headers: { "Content-Type": "multipart/form-data" } };
+
+      await axios
+        .post("generate.image", formData, config)
+        .then((result) => {
+          console.log(result);
+          return this.$router.push("/design");
+        })
+        .catch((err) => {
+          console.log(err.response.data);
+        });
+    },
   },
 };
 </script>

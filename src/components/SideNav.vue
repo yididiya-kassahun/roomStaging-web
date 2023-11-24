@@ -14,13 +14,15 @@
       permanent
     >
       <v-list color="transparent">
-        <router-link to="/">
-          <v-list-item prepend-icon="mdi-home"></v-list-item>
+        <router-link to="/" class="links">
+          <v-list-item  prepend-icon="mdi-home"></v-list-item>
         </router-link>
-        <router-link to="/design">
+        <router-link to="/design" class="links">
           <v-list-item prepend-icon="mdi-draw"></v-list-item>
         </router-link>
-        <v-list-item prepend-icon="mdi-clipboard-edit"></v-list-item>
+        <router-link to="/img" class="links">
+          <v-list-item prepend-icon="mdi-clipboard-edit"></v-list-item>
+        </router-link>
         <v-list-item prepend-icon="mdi-account-box"></v-list-item>
       </v-list>
     </v-navigation-drawer>
@@ -28,3 +30,10 @@
 </template>
 
 <script></script>
+
+<style>
+.links{
+    text-decoration: none;
+    color: white;
+}
+</style>
