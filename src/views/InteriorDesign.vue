@@ -11,15 +11,13 @@
     <v-row style="padding: 10px">
       <v-col cols="8">
         <v-card style="height: 500px">
-          <!-- <h3>Image</h3> -->
-          <v-img
-            class="align-center"
-            height="900"
-            width="1200"
-            :src="sample"
-            cover
+          <canvas
+            style="margin-left: 5%"
+            ref="canvas"
+            :width="900"
+            :height="500"
           >
-          </v-img>
+          </canvas>
         </v-card>
       </v-col>
 
@@ -37,16 +35,17 @@
                 <v-file-input
                   show-size
                   label="File input"
+                  @change="uploadImage"
                   v-model="imgData.img"
                   accept="image/*"
                 ></v-file-input>
                 <h3>Upload the mask</h3>
-                <v-file-input
+                <!-- <v-file-input
                   show-size
                   label="File input"
                   v-model="imgData.imgMask"
                   accept="image/*"
-                ></v-file-input>
+                ></v-file-input> -->
                 <small>Enter the description of the desiring room</small>
                 <v-textarea
                   clearable
@@ -312,6 +311,7 @@
 
 <script>
 import axios from "axios";
+import { fabric } from "fabric";
 
 import item1 from "../assets/products/bed.webp";
 import item2 from "../assets/products/chair.avif";
@@ -326,7 +326,7 @@ import sample from "../assets/img/sample.jpg";
 export default {
   data() {
     return {
-      sample: sample,
+      //sample: sample,
       item1: item1,
       item2: item2,
       item3: item3,
@@ -337,32 +337,104 @@ export default {
       item8: item8,
       imgData: {
         img: null,
-        imgMask: null,
         prompt: "",
+        canvas: null,
+        sampleImage: sample,
       },
     };
   },
+  mounted() {
+    this.initCanvas();
+  },
   methods: {
-    //  handleImageChange(event) {
-    //    this.imgData.img = event.target.files[0];
-    //    this.imgData.imgMask = event.target.files[1];
-    // },
+    initCanvas() {
+      this.canvas = new fabric.Canvas(this.$refs.canvas);
+      this.canvas.isDrawingMode = true;
 
-    async generateImg() {
+      // Set up the brush
+      this.canvas.freeDrawingBrush = new fabric.PencilBrush(this.canvas);
+      this.canvas.freeDrawingBrush.width = 20; // Adjust brush size
+
+      // Load the sample image
+      fabric.Image.fromURL(this.sampleImage, (img) => {
+        const imgScaled = img.scaleToWidth(this.canvas.width);
+        imgScaled.set({ left: 0, top: 0 });
+        this.canvas.setBackgroundImage(
+          imgScaled,
+          this.canvas.renderAll.bind(this.canvas)
+        );
+      });
+
+      // Set the brush to modify alpha channel (eraser)
+      this.canvas.on("path:created", (opt) => {
+        const path = opt.path;
+        path.globalCompositeOperation = "destination-out";
+      });
+    },
+    uploadImage(event) {
+      if (event.target.files && event.target.files[0]) {
+        let reader = new FileReader();
+
+        reader.onload = (e) => {
+          fabric.Image.fromURL(e.target.result, (img) => {
+            const imgScaled = img.scaleToWidth(this.canvas.width);
+            imgScaled.set({ left: 0, top: 0 });
+            this.canvas.setBackgroundImage(
+              imgScaled,
+              this.canvas.renderAll.bind(this.canvas)
+            );
+          });
+        };
+
+        reader.readAsDataURL(event.target.files[0]);
+      }
+    },
+
+    // converting base64 image to file
+
+    convertBase64ToBlob(base64) {
+
+      return new Promise((resolve) => {
+        const parts = base64.split(';base64,');
+        const imageType = parts[0].split(':')[1];
+        const decodedData = window.atob(parts[1]);
+        const uInt8Array = new Uint8Array(decodedData.length);
+
+        for (let i = 0; i < decodedData.length; ++i) {
+          uInt8Array[i] = decodedData.charCodeAt(i);
+        }
+
+        resolve(new Blob([uInt8Array], { type: imageType }));
+      });
+    },
+    
+     generateImg() {
+
+      const base64Img = this.canvas.toDataURL({
+          format: "png",
+          quality: 1,
+        });
+
+      this.convertBase64ToBlob(base64Img).then(blob => {
+
+        console.log("========>"+blob);
+        
       const formData = new FormData();
       formData.append("img", this.imgData.img[0]);
-      formData.append("imgMask", this.imgData.imgMask[0]);
+      formData.append("imgMask",blob,'imageMask.png');
       formData.append("prompt", this.imgData.prompt);
 
-    //  console.log("======" + this.imgData);
 
       const config = { headers: { "Content-Type": "multipart/form-data" } };
 
-      await axios
+       axios
         .post("generate.image", formData, config)
         .then((result) => {
           console.log(result);
           return this.$router.push("/design");
+        })
+      }).then(response => {
+          console.log('Image uploaded successfully', response);
         })
         .catch((err) => {
           console.log(err.response.data);
