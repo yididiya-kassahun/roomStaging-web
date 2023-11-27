@@ -58,6 +58,7 @@
             </v-row>
           </v-card>
         </v-col>
+        
         <v-responsive width="100%"></v-responsive>
 
         <v-col>
