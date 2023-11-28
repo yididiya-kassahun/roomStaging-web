@@ -2,7 +2,7 @@
   <v-card
     :max-width="1500"
     style="
-      height: 1700px;
+      height: 1800px;
       margin-left: 130px;
       background-color: rgb(239, 240, 241);
       outline: 0.3px solid #5e5e5e;
@@ -100,7 +100,8 @@
             @click:append-inner="toggleMarker"
             @click:append="sendMessage"
             @click:clear="clearMessage"
-          ></v-text-field>
+          >
+          </v-text-field>
         </v-form>
 
         <br />
@@ -108,10 +109,27 @@
           prepend-icon="mdi-creation"
           style="
             width: 100%;
-            height: 180px;
+            height: fit-content;
             background-color: rgb(0, 0, 0, 0.2);
           "
         >
+          <v-card-text>
+            <div class="gpt-result text-left">
+              Creating an itemized list for your room within a $500 budget can
+              be quite challenging, especially since prices can fluctuate and
+              specific item costs may vary. However, I'll give you an estimated
+              breakdown based on typical costs for budget-friendly items on
+              IKEA. Keep in mind these are estimates and actual prices may
+              differ:
+              <ul>
+                <li>Comfortable Chair with Ottoman: ~$150</li>
+                <li>Foldable Desk: ~$50</li>
+                <li>Space-Saving Chair: ~$30</li>
+                <li>TV Stand with Storage: ~$60</li>
+                <li>Indoor Plants: ~$20</li>
+              </ul>
+            </div>
+          </v-card-text>
         </v-card>
       </v-col>
     </v-row>
@@ -120,7 +138,7 @@
     </h2>
     <v-row style="margin: 10px">
       <v-col>
-        <v-card>
+       <v-card>
           <div style="padding: 20px">
             <v-img class="align-center" height="200" :src="item1" cover>
             </v-img>
@@ -315,7 +333,40 @@
           </div>
         </v-card>
       </v-col>
+      <!-- <v-col v-for="(furniture) in ikeaFurnitures" :key="furniture.id">
+       <v-card>
+          <div style="padding: 20px">
+            <v-img
+              class="align-center"
+              height="200"
+              width="200"
+              :src="furniture.image"
+              :alt="furniture.imageAlt"
+              cover
+            >
+            </v-img>
+            <h4 class="text-left">product name {{furniture.name}}</h4>
+            <h4 class="text-left">product price {{ furniture.price.currentPrice }}</h4>
+            <v-btn
+              color="white"
+              style="background-color: #000"
+              class="mt-4"
+              block
+            >
+              Get a product
+            </v-btn>
+          </div>
+        </v-card>
+      </v-col> -->
+      <!-- Pagination controls -->
     </v-row>
+    <v-col>
+      <div class="pagination">
+        <v-btn @click="prevPage" :disabled="currentPage === 1">Previous</v-btn>
+        <span style="padding: 5px;"> Page {{ currentPage }} of {{ totalPages }} </span>
+        <v-btn @click="nextPage" :disabled="currentPage === totalPages">Next</v-btn>
+      </div>
+    </v-col>
   </v-card>
 </template>
 
@@ -351,6 +402,9 @@ export default {
         canvas: null,
         sampleImage: sample,
       },
+      ikeaFurnitures:[],
+       itemsPerPage: 10, // Number of items to display per page
+      currentPage: 1, // Current page
     };
   },
   mounted() {
@@ -358,6 +412,10 @@ export default {
     canvas.width = 900;
     canvas.height = 500;
     this.initCanvas();
+    // Fetch data for the first item when the component is mounted
+    // if (this.items.length > 0) {
+    //   this.fetchData(this.items[0]);
+    // }
   },
   methods: {
     initCanvas() {
@@ -449,20 +507,83 @@ export default {
 
           const config = { headers: { "Content-Type": "multipart/form-data" } };
 
-          axios.post("generate.image", formData, config).then((result) => {
-            console.log(result);
-            return this.$router.push("/design");
-          });
+          axios
+            .post("generate.image", formData, config)
+            .then((result) => {
+              console.log(result);
+              return this.$router.push("/design");
+            })
+            .catch((err) => {
+              console.log("errpr", err.message);
+            });
         })
         .then((response) => {
           console.log("Image uploaded successfully", response);
         })
         .catch((err) => {
-          console.log(err.response.data);
+          console.log(err.response);
         });
     },
+
+    // render a list of products from IKEA store
+    async fetchData() {
+      const options = {
+        method: "GET",
+        url: "https://ikea-api.p.rapidapi.com/keywordSearch",
+        params: {
+          keyword: "Table",
+          countryCode: "us",
+          languageCode: "en",
+        },
+        headers: {
+          "X-RapidAPI-Key":
+            "4e5baec1b7msh9cc64cb3a7c71e8p1bbb7fjsn1928518f967d",
+          "X-RapidAPI-Host": "ikea-api.p.rapidapi.com",
+        },
+      };
+      try {
+        const response = await axios.request(options);
+        console.log(response.data);
+        this.ikeaFurnitures = response.data;
+       // renderProducts(response.data);
+      } catch (error) {
+        console.error(error);
+      }
+    },
+     // Go to the previous page
+    prevPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+      }
+    },
+    // Go to the next page
+    nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+      }
+    },
   },
+  computed:{
+    // Calculate the total number of pages based on items and itemsPerPage
+    totalPages() {
+      return Math.ceil(this.ikeaFurnitures.length / this.itemsPerPage );
+    },
+    // Calculate the items to display on the current page
+    displayedItems() {
+      const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+      const endIndex = startIndex + this.itemsPerPage;
+      return this.items.slice(startIndex, endIndex);
+    },
+  }
 };
 </script>
 
-<style lang="scss" scoped></style>
+<style scoped>
+ul {
+  margin-left: 40px;
+}
+.gpt-result {
+  font-size: 17px;
+  font-family: sans-serif;
+}
+</style>

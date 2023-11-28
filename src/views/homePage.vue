@@ -12,8 +12,8 @@
     <v-container>
       <v-row>
         <v-col>
-          <!-- card 1     -->
-          <v-card cols="12">
+           <!-- card 1     -->
+          <v-card cols="12" class="colItems">
             <v-row justify="space-around">
               <v-col cols="4">
                 <v-img height="200" :src="interiorImg" cover class="text-white">
@@ -37,7 +37,7 @@
 
         <v-col>
           <!-- card 2     -->
-          <v-card cols="12">
+          <v-card cols="12" class="colItems">
             <v-row justify="space-around">
               <v-col cols="4">
                 <v-img height="200" :src="floor2Img" cover class="text-white">
@@ -58,12 +58,12 @@
             </v-row>
           </v-card>
         </v-col>
-        
+
         <v-responsive width="100%"></v-responsive>
 
         <v-col>
           <!-- card 1     -->
-          <v-card cols="12">
+          <v-card cols="12" class="colItems">
             <v-row justify="space-around">
               <v-col cols="4">
                 <v-img
@@ -90,7 +90,7 @@
 
         <v-col>
           <!-- card 2     -->
-          <v-card cols="12">
+          <v-card cols="12" class="colItems">
             <v-row justify="space-around">
               <v-col cols="4">
                 <v-img height="200" :src="idea2Img" cover class="text-white">
@@ -132,7 +132,21 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
+
+@media (max-width: 720px) {
+   .colItems {
+    width: 400px;
+  }
+}
+
+@media (min-width: 721px) {
+  .colItems {
+    width: 550px;
+  }
+}
+
+
 .linkVal {
   text-decoration: none;
   color: #000;
