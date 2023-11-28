@@ -70,6 +70,7 @@
                       class="mt-4"
                       prepend-icon="mdi-download"
                       block
+                      @click="downloadImage()"
                     >
                     </v-btn>
                   </v-col>
@@ -138,7 +139,7 @@
     </h2>
     <v-row style="margin: 10px">
       <v-col>
-       <v-card>
+        <v-card>
           <div style="padding: 20px">
             <v-img class="align-center" height="200" :src="item1" cover>
             </v-img>
@@ -363,8 +364,12 @@
     <v-col>
       <div class="pagination">
         <v-btn @click="prevPage" :disabled="currentPage === 1">Previous</v-btn>
-        <span style="padding: 5px;"> Page {{ currentPage }} of {{ totalPages }} </span>
-        <v-btn @click="nextPage" :disabled="currentPage === totalPages">Next</v-btn>
+        <span style="padding: 5px">
+          Page {{ currentPage }} of {{ totalPages }}
+        </span>
+        <v-btn @click="nextPage" :disabled="currentPage === totalPages"
+          >Next</v-btn
+        >
       </div>
     </v-col>
   </v-card>
@@ -402,8 +407,8 @@ export default {
         canvas: null,
         sampleImage: sample,
       },
-      ikeaFurnitures:[],
-       itemsPerPage: 10, // Number of items to display per page
+      ikeaFurnitures: [],
+      itemsPerPage: 10, // Number of items to display per page
       currentPage: 1, // Current page
     };
   },
@@ -525,6 +530,27 @@ export default {
         });
     },
 
+    // download Image
+
+    downloadImage() {
+      const dataURL = this.canvas.toDataURL({
+        format: "png",
+        quality: 1,
+      });
+
+      console.log("dataURL " + JSON.stringify(dataURL));
+
+      // Create a temporary link element
+      const link = document.createElement("a");
+      link.download = "furnished-room.png";
+      link.href = dataURL;
+      document.body.appendChild(link);
+
+      // Trigger the download and remove the link
+      link.click();
+      document.body.removeChild(link);
+    },
+
     // render a list of products from IKEA store
     async fetchData() {
       const options = {
@@ -545,12 +571,12 @@ export default {
         const response = await axios.request(options);
         console.log(response.data);
         this.ikeaFurnitures = response.data;
-       // renderProducts(response.data);
+        // renderProducts(response.data);
       } catch (error) {
         console.error(error);
       }
     },
-     // Go to the previous page
+    // Go to the previous page
     prevPage() {
       if (this.currentPage > 1) {
         this.currentPage--;
@@ -563,10 +589,10 @@ export default {
       }
     },
   },
-  computed:{
+  computed: {
     // Calculate the total number of pages based on items and itemsPerPage
     totalPages() {
-      return Math.ceil(this.ikeaFurnitures.length / this.itemsPerPage );
+      return Math.ceil(this.ikeaFurnitures.length / this.itemsPerPage);
     },
     // Calculate the items to display on the current page
     displayedItems() {
@@ -574,7 +600,7 @@ export default {
       const endIndex = startIndex + this.itemsPerPage;
       return this.items.slice(startIndex, endIndex);
     },
-  }
+  },
 };
 </script>
 
